@@ -8,10 +8,9 @@ description: "Auditer automatiquement un site et son code local pour trouver pui
 Répondre en français. Le skill est autonome : l'utilisateur n'a pas à indiquer les erreurs. Il les cherche lui-même, les diagnostique dans le code local, les corrige après accord, puis explique comment valider dans Search Console. Ne poser une question que si une information indispensable est introuvable. Si l'utilisateur fournit déjà une erreur, un CSV ou une capture, l'exploiter en plus de la recherche autonome, sans reposer de questions.
 
 ## 0. Trouver le projet et le site (sans demander si possible)
-1. Appeler get_device_info pour lister les dossiers connectés. S'il y en a un seul, c'est le projet. S'il y en a plusieurs, choisir celui qui contient un site web (package.json, next.config.*, astro.config.*, index.html, wp-config.php…) ; en cas de doute réel, demander lequel.
-2. S'il n'y a aucun dossier utile, demander le chemin du projet, vérifier avec device_list_dir, puis appeler device_request_folder_access une seule fois pour ce dossier, avec une raison claire. Si les outils de l'ordinateur sont absents, indiquer d'ouvrir la conversation dans l'application Claude desktop et d'utiliser « Ajouter un dossier ».
-3. Déduire le domaine de production depuis le code : variables d'environnement (NEXT_PUBLIC_SITE_URL, SITE_URL…), champ homepage de package.json, siteUrl de next-sitemap/astro/nuxt, balises canonical, CNAME, vercel.json, netlify.toml, URL du sitemap, og:url. Ne demander le domaine que s'il est introuvable.
-4. Utiliser device_bash pour lire, chercher (grep, find) et modifier les fichiers sur place. Ne rien supprimer sans demande explicite.
+1. Le projet est le répertoire de travail courant (pwd). Vérifier qu'il contient un site web (package.json, next.config.*, astro.config.*, index.html, wp-config.php…). Si c'est un dossier parent contenant plusieurs projets, choisir celui qui correspond ; en cas de doute réel, demander lequel.
+2. Déduire le domaine de production depuis le code : variables d'environnement (NEXT_PUBLIC_SITE_URL, SITE_URL…), champ homepage de package.json, siteUrl de next-sitemap/astro/nuxt, balises canonical, CNAME, vercel.json, netlify.toml, URL du sitemap, og:url. Ne demander le domaine que s'il est introuvable.
+3. Utiliser les outils natifs de Claude Code (Read, Grep, Glob, Edit, Bash) pour lire, chercher et modifier les fichiers sur place. Ne rien supprimer sans demande explicite.
 
 ## 1. Rechercher les erreurs de façon autonome
 Lancer ces trois sources en parallèle quand c'est possible.
@@ -29,8 +28,8 @@ Lancer ces trois sources en parallèle quand c'est possible.
 - Performance (Core Web Vitals) : images sans width/height ou non optimisées, scripts bloquants, polices sans font-display, gros bundles.
 
 ### B. Crawl du site en production
-- Récupérer le sitemap en ligne (curl ou firecrawl_scrape), lister ses URL, puis tester chacune avec curl -sIL (code, chaîne de redirections, X-Robots-Tag, Content-Type). Pour plus de 200 URL, échantillonner par type de page (accueil, listes, détails, blog…) et le dire.
-- Pour les pages importantes, relever avec firecrawl_scrape : meta robots, canonical, title, JSON-LD, contenu réellement rendu (page vide ? message d'erreur avec code 200 ?), présence de l'URL dans le sitemap et règles correspondantes dans robots.txt.
+- Récupérer le sitemap en ligne (curl ou WebFetch), lister ses URL, puis tester chacune avec curl -sIL (code, chaîne de redirections, X-Robots-Tag, Content-Type). Pour plus de 200 URL, échantillonner par type de page (accueil, listes, détails, blog…) et le dire.
+- Pour les pages importantes, relever avec WebFetch (ou Firecrawl si disponible) : meta robots, canonical, title, JSON-LD, contenu réellement rendu (page vide ? message d'erreur avec code 200 ?), présence de l'URL dans le sitemap et règles correspondantes dans robots.txt.
 - Si le projet peut démarrer (npm run dev ou build), lancer le serveur local, tester les URL avec curl -I, puis comparer avec la production : une différence (déploiement non fait, variable d'environnement, CDN) est souvent la vraie cause.
 
 ### C. Lecture directe de Search Console (si accessible)
